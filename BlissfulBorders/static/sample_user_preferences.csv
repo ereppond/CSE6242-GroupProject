@@ -1,0 +1,5 @@
+sector,climate,humidity,LGBTQ_rank,WPSI_rank,freedom_rank,GDP_rank
+Service,Cold,Dry,1,2,3,4
+Industrial,Temperate,Medium,4,3,2,1
+Service,Temperate,Humid,1,2,3,4
+Agricultural,Tropical,Humid,3,1,2,4
