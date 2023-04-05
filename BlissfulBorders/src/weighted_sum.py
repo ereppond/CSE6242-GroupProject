@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import pandas as pd
-import numpy as np
 
 
 def load_data():
@@ -293,10 +292,10 @@ def optimize(df, user_profile, n=5):
     sorted_df = df.sort_values(by="weighted_sum", ascending=False).reset_index(
         drop=True
     )
-    n_best = (
-        sorted_df[["city", "country"]].head(n).to_records(index=False)
-    )  # Use .loc to slice and get a view of the original data
-
+    n_best = sorted_df.head(n)
+    while n_best.drop_duplicates(subset="country").shape[0] < n and n < 200:
+        n += 1
+        n_best = sorted_df.head(n).drop_duplicates(subset="country")
     # Return a list of the 'City' values of the top n rows
     return n_best
 

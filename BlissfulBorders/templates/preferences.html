@@ -117,13 +117,14 @@
             cursor: pointer;
         }
     </style>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='preferences.css') }}">
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='preferences.css') }}"> -->
 </head>
 
 <body>
     <nav>
         <ul>
             <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('test') }}">Testing</a></li>
             <li><a href="{{ url_for('add_rating') }}">Rate My Location</a></li>
             <li><a href="{{ url_for('preferences') }}">Results</a></li>
         </ul>
@@ -131,7 +132,7 @@
 
     <div id="map"></div>
     <div id="sidebar">
-        <h2>Top 10 Cities</h2>
+        <h2>Top Cities</h2>
         <ul id="city-list"></ul>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
@@ -147,14 +148,19 @@
             zoom: 3
         });
 
-        Papa.parse('/static/sample_data.csv', {
+        Papa.parse('/static/{{ filename }}', {
             header: true,
             download: true,
             complete: function (results) {
                 // Get the array of cities from the parsed CSV data
                 var cities = results.data;
+                // console.log(cities)
                 // Loop through the array of cities and add a marker for each one
-                for (var i = 0; i < 10; i++) {
+                var max_i = cities.length
+                if ("{{ filename}}" == "sample_data.csv") {
+                    max_i = 10
+                }
+                for (var i = 0; i < max_i; i++) {
                     var city = cities[i];
                     var marker = new mapboxgl.Marker({
                         element: createMarkerElement(i + 1)
