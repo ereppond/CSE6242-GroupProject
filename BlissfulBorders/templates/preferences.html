@@ -123,9 +123,9 @@
 <body>
     <nav>
         <ul>
-            <li><a href="#">Home</a></li>
-            <li><a href="#">Rate My Location</a></li>
-            <li><a href="#">Results</a></li>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('add_rating') }}">Rate My Location</a></li>
+            <li><a href="{{ url_for('preferences') }}">Results</a></li>
         </ul>
     </nav>
 
