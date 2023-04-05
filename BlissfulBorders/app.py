@@ -10,7 +10,9 @@ def index():
 
 @app.route("/preferences")
 def preferences():
-    return render_template("preferences.html")
+    return render_template(
+        "preferences.html", text="Your top recommendation was Tokyo!"
+    )
 
 
 if __name__ == "__main__":
