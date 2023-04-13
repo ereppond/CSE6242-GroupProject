@@ -8,27 +8,32 @@ import pandas as pd
 import scipy
 import numpy as np
 
+### Raw Data ###
+
 #World Hapiness Data
-wh_data = pd.read_csv("https://raw.githubusercontent.com/joannarashid/cse6242_proj/main/WH_data_2019.csv")
+wh_data = pd.read_csv("https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/WH_data_2019.csv")
 
 #Women's Prosperity Index
-wps_data = pd.read_csv("https://raw.githubusercontent.com/joannarashid/cse6242_proj/main/WPS-Index-2021-Data.csv", 
+wps_data = pd.read_csv("https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/WPS-Index-2021-Data.csv", 
                        encoding = 'unicode_escape')
 
 #Tropical Climate Data
-tropical_data = pd.read_csv("https://raw.githubusercontent.com/joannarashid/cse6242_proj/main/tropical_countries.csv")
+tropical_data = pd.read_csv("https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/tropical_countries.csv")
 
 #climate data
-climate_data = pd.read_csv('https://raw.githubusercontent.com/joannarashid/cse6242_proj/main/climate_zones.csv')
+climate_data = pd.read_csv('https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/climate_zones.csv')
 
 #LGBTQ Safety and Welfare Data
-lgbtq_data = pd.read_csv("https://raw.githubusercontent.com/joannarashid/cse6242_proj/main/LGBTQ_Safety_Index.csv")
+lgbtq_data = pd.read_csv("https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/LGBTQ_Safety_Index.csv")
 
 #Industry Sector Data
-sector_data = pd.read_csv("https://raw.githubusercontent.com/joannarashid/cse6242_proj/main/country_sectors.csv")
+sector_data = pd.read_csv("https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/country_sectors.csv")
 
 #City Climate Data
 city_data = pd.read_csv("https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/city_data.csv")
+
+#air quality Data
+aq_data = pd.read_csv('https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/SEDAC_annual_pm2-5_concentration.csv')
 
 ### Clean Data ###
 
@@ -63,9 +68,6 @@ sector_data['Sector Country'] = sector_data['Sector Country'].str.strip() #remov
 
 ### Join Data ###
 
-#since the World Happiness Index is the objectove value for this application, 
-#wh_data is the left df on whihc the df is started which ensures all countries in the WHI are included
-#subsequent joins eliminate observations that are not in the WHI
 
 #merge city_data with World Happiness 
 df = city_data.merge(wh_data,
@@ -97,34 +99,44 @@ df = df.merge(sector_data,
               left_on = 'country',
               right_on = 'Sector Country')
 
+#merge air quality data
+df = df.merge(aq_data,
+           how = 'left',
+            left_on = ["city_ascii", "Country"],
+            right_on = ["NAME","COUNTRYENG"] )
+
 #drop duplicate columns
 df.drop(['Climate Country', 'WPS Country', 'Avg_temp_F', 'Avg_temp_C',
-       'Sector Country','WPS Country','Sector Country','Sector Country'], axis=1, inplace=True) 
+       'Sector Country','WPS Country','Sector Country','Sector Country','AVPMU_1998',
+       'AVPMU_1999', 'AVPMU_2000', 'AVPMU_2001', 'AVPMU_2002', 'AVPMU_2003',
+      'AVPMU_2004', 'AVPMU_2005', 'AVPMU_2006', 'AVPMU_2007', 'AVPMU_2008',
+       'AVPMU_2009', 'AVPMU_2010', 'AVPMU_2011', 'AVPMU_2012', 'AVPMU_2013',
+       'AVPMU_2014', 'AVPMU_2015'], axis=1, inplace=True) 
 
 ### Transform Values ###
 climate_zones = {
-                "DFC":["Subartic, severe winter, no dry season, cool summer","Cold"],
-                 "CFB":["Marine west coast, warm summer","Temperate"],
-                 "ET":["Tundra","Cold"],
-                 "DFB":["Humid continental, no dry season, warm summer", "Cold"],
-                 "BWH":["Subtropical desert","Arid"],
-                 "BSH":["Subtropical steppe","Arid"],
-                 "CFA":["Humid subtropical, no dry season","Temperate"],
-                 "CSA":["Mediterranean, hot summer","Temperate"],
-                 "BSK":["Mid-latitude steppe","Arid"],
-                 "CWB":["Temperate highland tropical climate with dry winters","Temperate"],
-                 "CSB":["Mediterranean, warm summer","Temperate"],
-                 "AM":["Tropical monsoon","Tropical"],
-                 "AW":["Tropical wet and dry or savanna","Tropical"],
-                 "AF":["Tropical rainforest","Tropical"],
-                 "BWK":["Mid-latitude desert", "Arid"],
-                 "DWB":["Humid continental, severe dry winter, warm summer","Cold"],
-                 "DSC":["Humid continental, dry warm summer","Cold"],
-                 "CWA":["Humid subtropical, dry winter","Temperate"],
-                 "DSB":["Humid continental, dry warm summer", "Cold"],
-                 "DWA":["Humid continental, severe dry winter, hot summer", "Cold"],
-                 "DWC":["Subartic, dry winter, cool summer", "Cold"]
+                "AF": ["Tropical rainforest", "Tropical"],
+                "AM": ["Tropical monsoon", "Tropical"],
+                "AW": ["Tropical wet and dry or savanna", "Tropical"],
+                "BWH": ["Subtropical desert", "Arid"],
+                "BSH": ["Subtropical steppe", "Arid"],
+                "BSK": ["Mid-latitude steppe", "Arid"],
+                "BWK": ["Mid-latitude desert", "Arid"],
+                "CFA": ["Humid subtropical, no dry season", "Temperate"],
+                "CWA": ["Humid subtropical, dry winter", "Temperate"],
+                "CSA": ["Mediterranean, hot summer", "Temperate"],
+                "CSB": ["Mediterranean, warm summer", "Temperate"],
+                "CWB": ["Temperate highland tropical climate with dry winters", "Temperate"],
+                "DFB": ["Humid continental, no dry season, warm summer", "Cold"],
+                "DFC": ["Subartic, severe winter, no dry season, cool summer", "Cold"],
+                "DSC": ["Humid continental, dry warm summer", "Cold"],
+                "DSB": ["Humid continental, dry warm summer", "Cold"],
+                "DWA": ["Humid continental, severe dry winter, hot summer", "Cold"],
+                "DWB": ["Humid continental, severe dry winter, warm summer", "Cold"],
+                "DWC": ["Subartic, dry winter, cool summer", "Cold"],
+                "ET": ["Tundra", "Cold"]
                  }
+
 def map_climate_zones(zone):
     """
     Maps descriptions found in climate_zones dict to climate code in df per dict
@@ -144,6 +156,34 @@ def categorize_humidity(humidity):
         return "Medium"
     else:
         return "Dry"
+    
+def determine_air_quality(value):
+    if math.isnan(value):
+        return 'NaN'
+    elif value <= 50:
+        return 'Good'
+    elif 51 <= value <= 100:
+        return 'Moderate'
+    elif 101 <= value <= 150:
+        return 'Unhealthy for sensitive groups'
+    elif 151 <= value <= 200:
+        return 'Unhealthy'
+    elif 201 <= value <= 300:
+        return 'Very unhealthy'
+    else:
+        return 'Hazardous'
+    
+def determine_city_size(value):
+    if math.isnan(value):
+        return 'NaN'
+    elif value <= 4999:
+        return 'Rural'
+    elif 5000 <= value <= 49999:
+        return 'Town'
+    elif 50000 <= value <= 99999:
+        return 'City'
+    else:
+        return 'Big City'
 
 
 def transform_values(df):
@@ -165,6 +205,18 @@ def transform_values(df):
     # apply the mapping function to the climate zone column and create two new columns for descriptions
     df[["Climate description", "Climate type"]] = df["Climate zone"].apply(map_climate_zones).tolist()
     
+    # apply the function to the 'avg_humidity' column and create a new column with the results
+    df['humidity'] = df['avg_humidity'].apply(lambda x: categorize_humidity(x))
+    
+    # Apply the function to create a new 'air_quality' column
+    df['air_quality'] = df['AVPMU_2016'].apply(determine_air_quality)
+
+    # change #2016 aq values to negative for weighted sum calculation
+    df['neg_aq'] = (df['AVPMU_2016'] * -1)
+    
+    # Apply the function to create a new 'city_size' column
+    df['city_size'] = df['population'].apply(determine_city_size)
+    
     #convert sector data to decimal
     df['Agricultural percent'] = df['Agricultural percent'].str.rstrip('%').astype('float') / 100.0
     df['Industrial percent'] = df['Industrial percent'].str.rstrip('%').astype('float') / 100.0
@@ -179,6 +231,7 @@ def transform_values(df):
     df['WPS_norm'] = (df['WPS Score'] - df['WPS Score'].min()) / (df['WPS Score'].max() - df['WPS Score'].min())
     df['Freedom_norm'] = (df['Freedom to make life choices'] - df['Freedom to make life choices'].min()) / (df['Freedom to make life choices'].max() - df['Freedom to make life choices'].min())
     df['GDP_norm'] = (df['GDP per capita'] - df['GDP per capita'].min()) / (df['GDP per capita'].max() - df['GDP per capita'].min())
+    df['AQ_norm'] = (df['neg_aq'] - df['neg_aq'].min()) / (df['neg_aq'].max() - df['neg_aq'].min())
     
     # apply the function to the 'avg_humidity' column and create a new column with the results
     df['humidity'] = df['avg_humidity'].apply(lambda x: categorize_humidity(x))
@@ -193,80 +246,81 @@ def optimize(df, user_profile, n=5):
     Column is added to df with weighted value for each var.
     """
     # Filter for climate and sector
-    df = df[(df['Climate type'] == user_profile["climate"]) &(df['dom_sector'] == user_profile["sector"])].copy()
+    df = df[(df['Climate type'] == user_profile["climate"]) & \
+            (df['dom_sector'] == user_profile["sector"]) & \
+            (df['city_size'] == user_profile["city_size"])].copy()
     
     # Normalize the ranks so that they sum up to 1
-    rank_sum = user_profile["LGBTQ_rank"] +                user_profile["WPSI_rank"] +                 user_profile["freedom_rank"] +                 user_profile["GDP_rank"]
+    rank_sum = user_profile["LGBTQ_rank"] +\
+                user_profile["WPSI_rank"] + \
+                user_profile["freedom_rank"] + \
+                user_profile["GDP_rank"]
     LGBTQ_weight = user_profile["LGBTQ_rank"] / rank_sum
     WPS_weight = user_profile["WPSI_rank"] / rank_sum
     freedom_weight = user_profile["freedom_rank"] / rank_sum
     GDP_weight = user_profile["GDP_rank"] / rank_sum
+    AQ_weight = user_profile["AQ_rank"] / rank_sum
     
     # Create a new column in the dataframe that combines the weights with the corresponding variables
-    df.loc[:, 'weighted_sum'] = (LGBTQ_weight * df['LGBTQ_norm']) +                                 (WPS_weight * df['WPS_norm']) +                                 (freedom_weight * df['Freedom_norm']) +                                 (GDP_weight * df['GDP_norm'])
+    df.loc[:, 'weighted_sum'] = (LGBTQ_weight * df['LGBTQ_norm']) + \
+                                (WPS_weight * df['WPS_norm']) + \
+                                (freedom_weight * df['Freedom_norm']) + \
+                                (GDP_weight * df['GDP_norm']) + \
+                                (AQ_weight) * df['AQ_norm']
     
     # Find the top n rows with the highest weighted sums
     sorted_df = df.sort_values(by='weighted_sum', ascending=False).reset_index(drop=True)
-    n_best = sorted_df[['city', 'country']].head(n).to_records(index=False)  # Use .loc to slice and get a view of the original data
+    n_best = sorted_df[['city', 'country']].head(n).to_records(index=False)
     
     # Return a list of the 'City' values of the top n rows
     return n_best
 
-### User profile ###
-user_profile = {
-    'sector' : input("What economic sector is predominat in you ideal country? ('Agricultural', 'Service', 'Industrial'): "),
-    'climate' : input("What climate do you prefer? ('Cold', 'Temperate','Tropical'): "),
-    'humidity' : input("What level of humidity can you tolerate? ('Humid', 'Medium','Dry'): "),
-    'LGBTQ_rank' : int(input("Rank the importance of LGBTQ equality from 1 to 4: ")),
-    'WPSI_rank' : int(input("Rank the importance of status of women from 1 to 4: ")),
-    'freedom_rank' : int(input("Rank the importance of personal freedom from 1 to 4: ")),
-    'GDP_rank' : int(input("Rank the importance of the strength of the economy from 1 to 4: "))
-    }
+### Test Cases ###
 
-### Results ###
-best = optimize(df, user_profile, n=5)
-best
-
-### Test Users ###
 user1 = {
     'sector' : "Service",
     'climate' : "Cold",
-    'humidity' : 'Dry',
+    'city_size' : "Big City",
     'LGBTQ_rank' : 1,
     'WPSI_rank' : 2,
     'freedom_rank' : 3,
     'GDP_rank' : 4,
+    'AQ_rank' : 5
     }
-
 user2 = {
     'sector' : "Industrial",
-    'climate' : "Temperate",
-    'humidity' : 'Medium',
+    'climate' : "Cold",
+    'city_size' : "Big City",
     'LGBTQ_rank' : 4 ,
     'WPSI_rank' : 3,
     'freedom_rank' : 2,
-    'GDP_rank' : 1
+    'GDP_rank' : 1,
+    'AQ_rank' : 5
     }
 
 user3 = {
     'sector' : "Service",
     'climate' : "Temperate",
-    'humidity' : 'Humid',
-    'LGBTQ_rank' : 1,
+    'city_size' : "City",
+    'LGBTQ_rank' : 5,
     'WPSI_rank' : 2,
     'freedom_rank' : 3,
-    'GDP_rank' : 4
+    'GDP_rank' : 4,
+    'AQ_rank' : 1
     }
 
 user4 = {
     'sector' : "Agricultural",
     'climate' : "Tropical",
-    'humidity' : 'Humid',
-    'LGBTQ_rank' : 3,
+    'city_size' : "Rural",
+    'LGBTQ_rank' : 5,
     'WPSI_rank' : 1,
     'freedom_rank' : 2,
-    'GDP_rank' : 4
+    'GDP_rank' : 4,
+    'AQ_rank' : 1
     }
+
+### Results ###
 
 user1_best = optimize(df, user1, n=5)
 print("User1 5 Best places: ", user1_best)
@@ -279,4 +333,3 @@ print("User3 5 Best places: ", user3_best)
 
 user4_best = optimize(df, user4, n=5)
 print("User1 5 Best places: ", user4_best)
-
