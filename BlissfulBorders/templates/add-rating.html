@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>City Rating Form</title>
+    <style>
+        nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        nav ul {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin: 0 10px;
+        }
+
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        nav ul li a:hover {
+            background-color: #555;
+        }
+
+        body {
+            padding-top: 30px;
+            /* adjust the value to match the height of your navbar */
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('add_rating') }}">Rate My Location</a></li>
+            <li><a href="{{ url_for('preferences') }}">Results</a></li>
+            <li><a href="{{ url_for('get_user') }}">Get Results By User ID</a></li>
+        </ul>
+    </nav>
+    <h1>City Rating Form</h1>
+    <form>
+        <label for="country">Select a country:</label>
+        <select id="country" name="country">
+            <option value="">--Please choose an option--</option>
+            <!-- Add more countries here as needed -->
+        </select>
+        <br><br>
+        <label for="city">Select a city:</label>
+        <select id="city" name="city">
+            <option value="">--Please choose a country first--</option>
+        </select>
+        <br><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        // Read the sample_data.csv file
+        fetch('/static/sample_data.csv')
+            .then(response => response.text())
+            .then(data => {
+                // Parse the data into an array of objects
+                const lines = data.trim().split('\n');
+                const headers = lines.shift().split(',');
+                const cities = lines.map(line => {
+                    const values = line.split(',');
+                    return {
+                        country: values[headers.indexOf('country')],
+                        city: values[headers.indexOf('city')],
+                    };
+                });
+
+                // Get references to the country and city dropdowns
+                const countryDropdown = document.querySelector('#country');
+                const cityDropdown = document.querySelector('#city');
+
+                // Populate the country dropdown with the unique countries in the data
+                const countries = [...new Set(cities.map(city => city.country))].sort();
+                countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country;
+                    option.text = country;
+                    countryDropdown.appendChild(option);
+                });
+
+                // When the user selects a country, filter the cities by country and populate the city dropdown
+                countryDropdown.addEventListener('change', () => {
+                    const selectedCountry = countryDropdown.value;
+                    const filteredCities = cities.filter(city => city.country === selectedCountry);
+                    cityDropdown.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.text = '--Please choose an option--';
+                    cityDropdown.appendChild(defaultOption);
+                    filteredCities.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city.city;
+                        option.text = city.city;
+                        cityDropdown.appendChild(option);
+                    });
+                });
+            })
+            .catch(error => console.error(error));
+    </script>
+
+</body>
+
+</html>

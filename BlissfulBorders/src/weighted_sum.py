@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import pandas as pd
+import numpy as np
 
 
 def load_data():
@@ -40,12 +41,28 @@ def load_data():
     city_data = pd.read_csv(
         "https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/city_data.csv"
     )
+
+    aq_data = pd.read_csv(
+        "https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/SEDAC_annual_pm2-5_concentration.csv"
+    )
     wh_data, wps_data, climate_data, lgbtq_data, sector_data = clean_data(
         wh_data, wps_data, climate_data, lgbtq_data, sector_data
     )
-    df = join_data(wh_data, wps_data, climate_data, lgbtq_data, sector_data, city_data)
+    df = join_data(
+        wh_data, wps_data, climate_data, lgbtq_data, sector_data, city_data, aq_data
+    )
     df = transform_values(df)
     return df
+
+
+def load_saved_data():
+    return pd.read_csv(
+        "https://raw.githubusercontent.com/ereppond/CSE6242-GroupProject/main/BlissfulBorders/data/location_data.csv"
+    )
+
+
+def load_user_data():
+    return pd.read_csv("data/user_data.csv")
 
 
 def clean_data(wh_data, wps_data, climate_data, lgbtq_data, sector_data):
@@ -91,7 +108,9 @@ def clean_data(wh_data, wps_data, climate_data, lgbtq_data, sector_data):
     ]
 
     # Clean sector data
-    sector_data.rename(columns={"Country": "Sector Country"}, inplace=True)
+    sector_data.rename(
+        columns={"Country": "Sector Country", "dom_sector": "sector"}, inplace=True
+    )
     sector_data["Sector Country"] = sector_data[
         "Sector Country"
     ].str.strip()  # removing leading spaces
@@ -99,7 +118,9 @@ def clean_data(wh_data, wps_data, climate_data, lgbtq_data, sector_data):
     return wh_data, wps_data, climate_data, lgbtq_data, sector_data
 
 
-def join_data(wh_data, wps_data, climate_data, lgbtq_data, sector_data, city_data):
+def join_data(
+    wh_data, wps_data, climate_data, lgbtq_data, sector_data, city_data, aq_data
+):
     ### Join Data ###
 
     # since the World Happiness Index is the objectove value for this application,
@@ -123,6 +144,14 @@ def join_data(wh_data, wps_data, climate_data, lgbtq_data, sector_data, city_dat
     # merge economic sector data data with main df
     df = df.merge(sector_data, how="left", left_on="country", right_on="Sector Country")
 
+    # merge air quality data
+    df = df.merge(
+        aq_data,
+        how="left",
+        left_on=["city_ascii", "Country"],
+        right_on=["NAME", "COUNTRYENG"],
+    )
+
     # drop duplicate columns
     df.drop(
         [
@@ -138,6 +167,8 @@ def join_data(wh_data, wps_data, climate_data, lgbtq_data, sector_data, city_dat
         axis=1,
         inplace=True,
     )
+    df["avg_temp"] = df["avg_temp"].round(1)
+    df["population"] = df["population"].fillna(0).astype(int)
     return df
 
 
@@ -189,6 +220,36 @@ def categorize_humidity(humidity):
         return "Dry"
 
 
+def determine_air_quality(value):
+    if str(value) == "nan":
+        return np.nan
+    elif value <= 50:
+        return "Good"
+    elif 51 <= value <= 100:
+        return "Moderate"
+    elif 101 <= value <= 150:
+        return "Unhealthy for sensitive groups"
+    elif 151 <= value <= 200:
+        return "Unhealthy"
+    elif 201 <= value <= 300:
+        return "Very unhealthy"
+    else:
+        return "Hazardous"
+
+
+def determine_city_size(value):
+    if str(value) == "nan":
+        return np.nan
+    elif value <= 4999:
+        return "Rural"
+    elif 5000 <= value <= 49999:
+        return "Town"
+    elif 50000 <= value <= 99999:
+        return "City"
+    else:
+        return "Big City"
+
+
 def transform_values(df):
     """
     Caluclulates new values and add column for LGBTQ Score
@@ -214,6 +275,18 @@ def transform_values(df):
         df["Climate zone"].apply(map_climate_zones).tolist()
     )
 
+    # apply the function to the 'avg_humidity' column and create a new column with the results
+    df["humidity"] = df["avg_humidity"].apply(lambda x: categorize_humidity(x))
+
+    # Apply the function to create a new 'air_quality' column
+    df["air_quality"] = df["AVPMU_2016"].apply(determine_air_quality)
+
+    # change #2016 aq values to negative for weighted sum calculation
+    df["neg_aq"] = df["AVPMU_2016"] * -1
+
+    # Apply the function to create a new 'city_size' column
+    df["city_size"] = df["population"].apply(determine_city_size)
+
     # convert sector data to decimal
     df["Agricultural percent"] = (
         df["Agricultural percent"].str.rstrip("%").astype("float") / 100.0
@@ -226,32 +299,33 @@ def transform_values(df):
     )
 
     # add dominant sector
-    df["dom_sector"] = df[
+    df["sector"] = df[
         ["Agricultural percent", "Industrial percent", "Service percent"]
     ].idxmax(axis=1)
-    df["dom_sector"] = df["dom_sector"].str.replace(" percent", "")
+    df["sector"] = df["sector"].str.replace(" percent", "")
 
     # Normalizing data to range 0,1
-    df["LGBTQ_norm"] = (df["LGBTQ Score"] - df["LGBTQ Score"].min()) / (
+    df["LGBTQ_rank"] = (df["LGBTQ Score"] - df["LGBTQ Score"].min()) / (
         df["LGBTQ Score"].max() - df["LGBTQ Score"].min()
     )
-    df["WPS_norm"] = (df["WPS Score"] - df["WPS Score"].min()) / (
+    df["WPS_rank"] = (df["WPS Score"] - df["WPS Score"].min()) / (
         df["WPS Score"].max() - df["WPS Score"].min()
-    )
-    df["Freedom_norm"] = (
+    ).round(3)
+    df["freedom_rank"] = (
         df["Freedom to make life choices"] - df["Freedom to make life choices"].min()
     ) / (
         df["Freedom to make life choices"].max()
         - df["Freedom to make life choices"].min()
     )
-    df["GDP_norm"] = (df["GDP per capita"] - df["GDP per capita"].min()) / (
+    df["GDP_rank"] = (df["GDP per capita"] - df["GDP per capita"].min()) / (
         df["GDP per capita"].max() - df["GDP per capita"].min()
-    )
+    ).round(2)
+    df["AQ_rank"] = (df["neg_aq"] - df["neg_aq"].min()) / (
+        df["neg_aq"].max() - df["neg_aq"].min()
+    ).round(2)
 
     # apply the function to the 'avg_humidity' column and create a new column with the results
     df["humidity"] = df["avg_humidity"].apply(lambda x: categorize_humidity(x))
-
-    ### Filtering / Weighted-Sum Optimization
     return df
 
 
@@ -263,9 +337,11 @@ def optimize(df, user_profile, n=5):
     Column is added to df with weighted value for each var.
     """
     # Filter for climate and sector
+    print(df.head())
     df = df[
-        (df["Climate type"] == user_profile["climate"])
-        & (df["dom_sector"] == user_profile["sector"])
+        (df["climate"] == user_profile["climate"])
+        & (df["sector"] == user_profile["sector"])
+        & (df["city_size"] == user_profile["city_size"])
     ].copy()
 
     # Normalize the ranks so that they sum up to 1
@@ -279,25 +355,31 @@ def optimize(df, user_profile, n=5):
     WPS_weight = user_profile["WPSI_rank"] / rank_sum
     freedom_weight = user_profile["freedom_rank"] / rank_sum
     GDP_weight = user_profile["GDP_rank"] / rank_sum
+    # AQ_weight = user_profile["AQ_rank"] / rank_sum
 
     # Create a new column in the dataframe that combines the weights with the corresponding variables
     df.loc[:, "weighted_sum"] = (
-        (LGBTQ_weight * df["LGBTQ_norm"])
-        + (WPS_weight * df["WPS_norm"])
-        + (freedom_weight * df["Freedom_norm"])
-        + (GDP_weight * df["GDP_norm"])
+        (LGBTQ_weight * df["LGBTQ_rank"])
+        + (WPS_weight * df["WPSI_rank"])
+        + (freedom_weight * df["freedom_rank"])
+        + (GDP_weight * df["GDP_rank"])
+        # + (AQ_weight) * df["AQ_norm"]
     )
 
     # Find the top n rows with the highest weighted sums
-    sorted_df = df.sort_values(by="weighted_sum", ascending=False).reset_index(
-        drop=True
-    )
-    n_best = sorted_df.head(n)
-    while n_best.drop_duplicates(subset="country").shape[0] < n and n < 200:
-        n += 1
-        n_best = sorted_df.head(n).drop_duplicates(subset="country")
+    try:
+        sorted_df = (
+            df.sort_values(by="weighted_sum", ascending=False)
+            .reset_index(drop=True)
+            .head(n)
+        )
+    except:
+        sorted_df = df.sort_values(by="weighted_sum", ascending=False).reset_index(
+            drop=True
+        )
+
     # Return a list of the 'City' values of the top n rows
-    return n_best
+    return sorted_df
 
 
 if __name__ == "__main__":

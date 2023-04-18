@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Get Recommendations Based on User ID</title>
+    <style>
+        nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        nav ul {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin: 0 10px;
+        }
+
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        nav ul li a:hover {
+            background-color: #555;
+        }
+
+        body {
+            padding-top: 30px;
+            /* adjust the value to match the height of your navbar */
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('add_rating') }}">Rate My Location</a></li>
+            <li><a href="{{ url_for('preferences') }}">Results</a></li>
+            <li><a href="{{ url_for('get_user') }}">Get Results By User ID</a></li>
+
+        </ul>
+    </nav>
+    <h1>Get Recommendations Based on User ID</h1>
+    <form method="POST" action="{{ url_for('submit_userid') }}">
+        <label for="userid">Enter your user ID:</label>
+        <input type="text" id="userid" name="userid">
+        <br><br>
+        <label for="num_results">How many locations would you like:</label>
+        <input type="range" id="num_results" name="num_results" min="1" max="10"
+            oninput="num_results_value.innerHTML = num_results.value;">
+        <span id="num_results_value">5</span>
+
+        <br><br>
+        <input type="submit" name="weighted_filtering" value="Get Weighted Recommendations">
+        <input type="submit" name="recommender" value="Get Predicted Recommendations">
+    </form>
+</body>
+
+</html>
