@@ -174,6 +174,41 @@
             }
         }
 
+        async function getCityImageURL(country, city) {
+            const baseUrl = 'https://commons.wikimedia.org/w/api.php';
+            const searchQuery = `${city}, ${country}`;
+            const url = new URL(baseUrl);
+
+            // Set the search parameters
+            url.searchParams.set('action', 'query');
+            url.searchParams.set('format', 'json');
+            url.searchParams.set('prop', 'imageinfo');
+            url.searchParams.set('generator', 'search');
+            url.searchParams.set('utf8', '1');
+            url.searchParams.set('formatversion', '2');
+            url.searchParams.set('gsrsearch', searchQuery);
+            url.searchParams.set('gsrnamespace', '6'); // Search only in the 'File' namespace
+            url.searchParams.set('iiprop', 'url');
+            url.searchParams.set('origin', '*'); // Required for CORS requests
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.query && data.query.pages.length > 0) {
+                    const imageURL = data.query.pages[0].imageinfo[0].url;
+                    return imageURL;
+                } else {
+                    console.log('No image found for the given city and country');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching image from Wikimedia Commons:', error);
+                return null;
+            }
+        }
+
+
         Papa.parse('/static/{{ filename }}', {
             header: true,
             download: true,
@@ -191,6 +226,41 @@
                     }
                 }
 
+                async function addWikipediaLink(city, cityInfo) {
+                    const wikipediaUrl = await getWikipediaArticleUrl(city.country, city.city);
+                    if (wikipediaUrl) {
+                        cityInfo.insertAdjacentHTML('beforeend', `<p><a href="${wikipediaUrl}" target="_blank">Read more on Wikipedia</a></p>`);
+                    }
+                }
+
+                async function setPopupContent(city) {
+                    const htmlContent = `
+                        <div style="font-size: 14px; line-height: 1.5; overflow: hidden;">
+                            <h2 style="font-size: 20px; margin-bottom: 10px;">${city.city}</h2>
+                            <div><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}</div>
+                            <div><strong>Average Temperature:</strong> ${Math.round(city.avg_temp)} &#8451;</div>
+                            <div><strong>Average Humidity:</strong> ${Math.round(city.avg_humidity)}%</div>
+                            <div><strong>Country:</strong> ${city.country}</div>
+                        </div>
+                        `;
+
+                    return htmlContent;
+                }
+
+                // Add container for city image
+                var cityImageContainer = d3.select("body").append("div")
+                    .attr("id", "city-image-container")
+                    .style("position", "fixed")
+                    .style("top", "100px")
+                    .style("left", "50px")
+                    .style("max-width", "400px");
+
+                // Create a new container div for the white box
+                var whiteBoxContainer = cityImageContainer.append("div")
+                    .attr("class", "white-box-container")
+                    .style("background-color", "#ffffff")
+                    .style("box-shadow", "0px 0px 5px rgba(0, 0, 0, 0.5)")
+
 
                 for (var i = 0; i < max_i; i++) {
                     var city = cities[i];
@@ -199,23 +269,16 @@
                     })
                         .setLngLat([city.lng, city.lat])
                         .addTo(map);
-                    var popup = new mapboxgl.Popup({ offset: 25, maxWidth: '500px' })
-                        .setHTML(`
-                        <div style="font-size: 14px; line-height: 1.5; overflow: hidden;">
-                            <h2 style="font-size: 20px; margin-bottom: 10px;">${city.city}</h2>
-                            <div><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}</div>
-                            <div><strong>Average Temperature:</strong> ${Math.round(city.avg_temp)} &#8451;</div>
-                            <div><strong>Average Humidity:</strong> ${Math.round(city.avg_humidity)}%</div>
-                            <div><strong>Country:</strong> ${city.country}</div>
-                        </div>
-                        `);
-                    marker.setPopup(popup);
-
+                    setPopupContent(city).then((popupContent) => {
+                        var popup = new mapboxgl.Popup({ offset: 25, maxWidth: '500px' })
+                            .setHTML(popupContent);
+                        marker.setPopup(popup);
+                    });
 
                     var li = d3.select("#city-list").append("li")
                         .text(city.city)
                         .on("click", function (clickedCity) {
-                            return function () {
+                            return async function () {
                                 var cityInfo = this.nextSibling;
                                 if (cityInfo.style.display === "none") {
                                     cityInfo.style.display = "block";
@@ -227,15 +290,37 @@
                                     center: [clickedCity.lng, clickedCity.lat],
                                     zoom: 8
                                 });
+
+                                // Get the city image and display it in the top-left corner of the screen.
+                                const imageURL = await getCityImageURL(clickedCity.country, clickedCity.city);
+                                var cityImage = cityImageContainer.select("img");
+                                if (imageURL) {
+                                    if (cityImage.empty()) {
+                                        cityImageContainer.append("img").attr("src", imageURL).attr("alt", clickedCity.city).style("width", "100%").style("height", "auto");
+                                    } else {
+                                        cityImage.attr("src", imageURL).attr("alt", clickedCity.city);
+                                    }
+                                } else {
+                                    cityImageContainer.select("img").remove();
+                                }
+
+                                // Toggle the city image visibility based on the cityInfo visibility
+                                if (cityInfo.style.display === "none") {
+                                    cityImage.style("display", "none");
+                                } else {
+                                    cityImage.style("display", "block");
+                                }
                             };
                         }(city));
+
+
 
                     var cityInfo = d3.select("#city-list").append("div")
                         .attr("class", "city-info")
                         .style("display", "none")
                         // if airquality is empty it will appear 'Unknown'
                         .html(`<p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Air Quality:</strong> ${city.air_quality ? city.air_quality : 'Unknown'}</p>`);
-                        
+
                     await addWikipediaLink(city, cityInfo.node());
                 }
             }
