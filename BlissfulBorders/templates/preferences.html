@@ -103,21 +103,11 @@
             background-color: #eee;
         }
 
-        .close {
-            color: #aaaaaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: #000;
-            text-decoration: none;
-            cursor: pointer;
+        .city-info {
+            display: none;
+            margin-top: 5px;
         }
     </style>
-    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='preferences.css') }}"> -->
 </head>
 
 <body>
@@ -129,7 +119,6 @@
             <li><a href="{{ url_for('get_user') }}">Get Results By User ID</a></li>
         </ul>
     </nav>
-
     <div id="map"></div>
     <div id="sidebar">
         <h2>Top Cities</h2>
@@ -152,10 +141,7 @@
             header: true,
             download: true,
             complete: function (results) {
-                // Get the array of cities from the parsed CSV data
                 var cities = results.data;
-                // console.log(cities)
-                // Loop through the array of cities and add a marker for each one
                 var max_i = cities.length
                 if ("{{ filename}}" == "sample_data.csv") {
                     max_i = 10
@@ -171,28 +157,33 @@
                         .setHTML(`<h3>${city.city}</h3><p>\nPopulation: ${city.population}<br>Average Temp: ${city.avg_temp}</p>`);
                     marker.setPopup(popup);
 
-                    // Append city name to the list
                     var li = d3.select("#city-list").append("li")
-                        .text(city.city);
-                    li.on("click", function (selectedCity) {
-                        return function () {
-                            var cityPopup = new mapboxgl.Popup({ offset: 25 })
-                                .setHTML(`<h3>${city.city}</h3><p>\nPopulation: ${city.population}<br>Average Temp: ${city.avg_temp}s</p>`);
-                            // Center the map on the selected city
-                            map.flyTo({
-                                center: [selectedCity.lng, selectedCity.lat],
-                                zoom: 8
-                            });
-                            // Open the popup at the selected city's location
-                            marker.setPopup(cityPopup).togglePopup();
-                            map.addImage()
-                        }
-                    }(city));
+                        .text(city.city)
+                        .on("click", function (clickedCity) {
+                            return function () {
+                                var cityInfo = this.nextSibling;
+                                if (cityInfo.style.display === "none") {
+                                    cityInfo.style.display = "block";
+                                } else {
+                                    cityInfo.style.display = "none";
+                                }
+
+                                map.flyTo({
+                                    center: [clickedCity.lng, clickedCity.lat],
+                                    zoom: 8
+                                });
+                            };
+                        }(city));
+
+                    var cityInfo = d3.select("#city-list").append("div")
+                        .attr("class", "city-info")
+                        .style("display", "none")
+                        .html(`<p>Population: ${city.population}<br>Air Quality: ${city.air_quality}</p>`);
+
                 }
             }
         });
 
-        // Helper function to create a div element with a number inside a circle
         function createMarkerElement(number) {
             var el = document.createElement('div');
             el.className = 'marker';

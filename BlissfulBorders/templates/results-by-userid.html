@@ -2,20 +2,32 @@
 <html>
 
 <head>
-    <title>Get Recommendations Based on User ID</title>
+    <title>Recommendations by User ID</title>
     <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
         nav {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 50px;
+            height: 60px;
             background-color: #333;
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
+            z-index: 1;
         }
 
         nav ul {
@@ -34,15 +46,56 @@
             text-decoration: none;
             padding: 10px;
             border-radius: 5px;
+            transition: background-color 0.3s;
         }
 
         nav ul li a:hover {
             background-color: #555;
         }
 
-        body {
-            padding-top: 30px;
-            /* adjust the value to match the height of your navbar */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 80px 20px;
+            background-color: #fff;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        form input[type="range"] {
+            width: 75%;
+        }
+
+        form input[type="text"] {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        form input[type="submit"] {
+            display: inline-block;
+            background-color: #333;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        form input[type="submit"]:hover {
+            background-color: #555;
         }
     </style>
 </head>
@@ -54,23 +107,23 @@
             <li><a href="{{ url_for('add_rating') }}">Rate My Location</a></li>
             <li><a href="{{ url_for('preferences') }}">Results</a></li>
             <li><a href="{{ url_for('get_user') }}">Get Results By User ID</a></li>
-
         </ul>
     </nav>
-    <h1>Get Recommendations Based on User ID</h1>
-    <form method="POST" action="{{ url_for('submit_userid') }}">
-        <label for="userid">Enter your user ID:</label>
-        <input type="text" id="userid" name="userid">
-        <br><br>
-        <label for="num_results">How many locations would you like:</label>
-        <input type="range" id="num_results" name="num_results" min="1" max="10"
-            oninput="num_results_value.innerHTML = num_results.value;">
-        <span id="num_results_value">5</span>
+    <div class="container">
+        <h1>Get Recommendations Based on User ID</h1>
+        <form method="POST" action="{{ url_for('submit_userid') }}">
+            <label for="userid">Enter your user ID:</label>
+            <input type="text" id="userid" name="userid">
+            <br><br>
+            <label for="num_results">How many locations would you like:</label>
+            <input type="range" id="num_results" name="num_results" min="1" max="10"
+                oninput="num_results_value.innerHTML = num_results.value;">
+            <span id="num_results_value">5</span>
 
-        <br><br>
-        <input type="submit" name="weighted_filtering" value="Get Weighted Recommendations">
-        <input type="submit" name="recommender" value="Get Predicted Recommendations">
-    </form>
+            <br><br>
+            <input type="submit" name="weighted_filtering" value="Get Weighted Recommendations">
+            <input type="submit" name="recommender" value="Get Predicted Recommendations">
+        </form>
 </body>
 
 </html>

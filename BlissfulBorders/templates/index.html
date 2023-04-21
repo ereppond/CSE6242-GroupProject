@@ -2,20 +2,32 @@
 <html>
 
 <head>
-    <title>Testing w/ User Profiles</title>
+    <title>Recommendations</title>
     <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
         nav {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 50px;
+            height: 60px;
             background-color: #333;
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
+            z-index: 1;
         }
 
         nav ul {
@@ -34,15 +46,56 @@
             text-decoration: none;
             padding: 10px;
             border-radius: 5px;
+            transition: background-color 0.3s;
         }
 
         nav ul li a:hover {
             background-color: #555;
         }
 
-        body {
-            padding-top: 30px;
-            /* adjust the value to match the height of your navbar */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 80px 20px;
+            background-color: #fff;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        form input[type="range"] {
+            width: 100%;
+        }
+
+        form select {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        form input[type="submit"] {
+            display: inline-block;
+            background-color: #333;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        form input[type="submit"]:hover {
+            background-color: #555;
         }
     </style>
 </head>
@@ -56,67 +109,68 @@
             <li><a href="{{ url_for('get_user') }}">Get Results By User ID</a></li>
         </ul>
     </nav>
-    <h1>Get Moving Location Recommendations</h1>
-    <form method="POST" action="{{ url_for('submit_form') }}">
-        <label for="sector">Select a economic sector:</label>
-        <select id="sector" name="sector">
-            <option value="">--Please choose an option--</option>
-            <option value="Agricultural">Agricultural</option>
-            <option value="Service">Service</option>
-            <option value="Industrial">Industrial</option>
-        </select>
-        <br><br>
-        <label for="climate">Select a climate:</label>
-        <select id="climate" name="climate">
-            <option value="">--Please choose a climate--</option>
-            <option value="Cold">Cold</option>
-            <option value="Temperate">Temperate</option>
-            <option value="Tropical">Tropical</option>
-        </select>
-        <br><br>
-        <label for="humidity">Select a level of humidity:</label>
-        <select id="humidity" name="humidity">
-            <option value="">--Please choose a humidity level--</option>
-            <option value="Humid">Humid</option>
-            <option value="Moderate">Moderate</option>
-            <option value="Dry">Dry</option>
-        </select>
-        <br></br>
-        <label for="city_size">Select a city size:</label>
-        <select id="city_size" name="city_size">
-            <option value="">--Please choose a city size--</option>
-            <option value="Rural">Rural</option>
-            <option value="Town">Town</option>
-            <option value="City">City</option>
-            <option value="Big City">Big City</option>
-        </select>
-        <br><br>
-        <label for="lgbtq">Importance of LGBTQ Equality:</label>
-        <input type="range" id="lgbtq" name="lgbtq" min="0" max="4" oninput="lgbtq_value.innerHTML = lgbtq.value;">
-        <span id="lgbtq_value">2</span>
-        <br><br>
-        <label for="women">Importance of Status of Women Equality:</label>
-        <input type="range" id="women" name="women" min="0" max="4" oninput="women_value.innerHTML = women.value;">
-        <span id="women_value">2</span>
-        <br><br>
-        <label for="freedom">Importance of Freedom:</label>
-        <input type="range" id="freedom" name="freedom" min="0" max="4"
-            oninput="freedom_value.innerHTML = freedom.value;">
-        <span id="freedom_value">2</span>
-        <br><br>
-        <label for="economy">Importance of Strength of Economy:</label>
-        <input type="range" id="economy" name="economy" min="0" max="4"
-            oninput="economy_value.innerHTML = economy.value;">
-        <span id="economy_value">2</span>
-        <br><br>
-        <label for="num_results">How many locations would you like:</label>
-        <input type="range" id="num_results" name="num_results" min="1" max="10"
-            oninput="num_results_value.innerHTML = num_results.value;">
-        <span id="num_results_value">5</span>
+    <div class="container">
+        <h1>Get Moving Location Recommendations</h1>
+        <form method="POST" action="{{ url_for('submit_form') }}">
+            <label for="sector">Select a economic sector:</label>
+            <select id="sector" name="sector">
+                <option value="">--Please choose an option--</option>
+                <option value="Agricultural">Agricultural</option>
+                <option value="Service">Service</option>
+                <option value="Industrial">Industrial</option>
+            </select>
+            <br><br>
+            <label for="climate">Select a climate:</label>
+            <select id="climate" name="climate">
+                <option value="">--Please choose a climate--</option>
+                <option value="Cold">Cold</option>
+                <option value="Temperate">Temperate</option>
+                <option value="Tropical">Tropical</option>
+            </select>
+            <br><br>
+            <label for="humidity">Select a level of humidity:</label>
+            <select id="humidity" name="humidity">
+                <option value="">--Please choose a humidity level--</option>
+                <option value="Humid">Humid</option>
+                <option value="Moderate">Moderate</option>
+                <option value="Dry">Dry</option>
+            </select>
+            <br></br>
+            <label for="city_size">Select a city size:</label>
+            <select id="city_size" name="city_size">
+                <option value="">--Please choose a city size--</option>
+                <option value="Rural">Rural</option>
+                <option value="Town">Town</option>
+                <option value="City">City</option>
+                <option value="Big City">Big City</option>
+            </select>
+            <br><br>
+            <label for="lgbtq">Importance of LGBTQ Equality:</label>
+            <input type="range" id="lgbtq" name="lgbtq" min="0" max="4" oninput="lgbtq_value.innerHTML = lgbtq.value;">
+            <span id="lgbtq_value">2</span>
+            <br><br>
+            <label for="women">Importance of Status of Women Equality:</label>
+            <input type="range" id="women" name="women" min="0" max="4" oninput="women_value.innerHTML = women.value;">
+            <span id="women_value">2</span>
+            <br><br>
+            <label for="freedom">Importance of Freedom:</label>
+            <input type="range" id="freedom" name="freedom" min="0" max="4"
+                oninput="freedom_value.innerHTML = freedom.value;">
+            <span id="freedom_value">2</span>
+            <br><br>
+            <label for="economy">Importance of Strength of Economy:</label>
+            <input type="range" id="economy" name="economy" min="0" max="4"
+                oninput="economy_value.innerHTML = economy.value;">
+            <span id="economy_value">2</span>
+            <br><br>
+            <label for="num_results">How many locations would you like:</label>
+            <input type="range" id="num_results" name="num_results" min="1" max="10"
+                oninput="num_results_value.innerHTML = num_results.value;">
+            <span id="num_results_value">5</span>
 
-        <br><br>
-        <input type="submit" name="weighted_filtering" value="Get Recommendations">
-    </form>
+            <br><br>
+            <input type="submit" name="weighted_filtering" value="Get Recommendations">
+        </form>
 </body>
 
 </html>
