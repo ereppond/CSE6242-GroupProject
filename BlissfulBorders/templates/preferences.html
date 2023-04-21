@@ -220,16 +220,12 @@
                 }
 
                 async function addWikipediaLink(city, cityInfo) {
-                    const wikipediaUrl = await getWikipediaArticleUrl(city.country, city.city);
-                    if (wikipediaUrl) {
-                        cityInfo.insertAdjacentHTML('beforeend', `<p><a href="${wikipediaUrl}" target="_blank">Read more on Wikipedia</a></p>`);
-                    }
-                }
-
-                async function addWikipediaLink(city, cityInfo) {
-                    const wikipediaUrl = await getWikipediaArticleUrl(city.country, city.city);
-                    if (wikipediaUrl) {
-                        cityInfo.insertAdjacentHTML('beforeend', `<p><a href="${wikipediaUrl}" target="_blank">Read more on Wikipedia</a></p>`);
+                    if (!cityInfo.getAttribute('data-wikipedia-link-added')) {
+                        const wikipediaUrl = await getWikipediaArticleUrl(city.country, city.city);
+                        if (wikipediaUrl) {
+                            cityInfo.insertAdjacentHTML('beforeend', `<p><a href="${wikipediaUrl}" target="_blank">Read more on Wikipedia</a></p>`);
+                            cityInfo.setAttribute('data-wikipedia-link-added', 'true');
+                        }
                     }
                 }
 
@@ -282,6 +278,9 @@
                                 var cityInfo = this.nextSibling;
                                 if (cityInfo.style.display === "none") {
                                     cityInfo.style.display = "block";
+
+                                    // Add Wikipedia link only when cityInfo is displayed
+                                    await addWikipediaLink(clickedCity, cityInfo);
                                 } else {
                                     cityInfo.style.display = "none";
                                 }
@@ -313,15 +312,12 @@
                             };
                         }(city));
 
-
-
                     var cityInfo = d3.select("#city-list").append("div")
                         .attr("class", "city-info")
                         .style("display", "none")
                         // if airquality is empty it will appear 'Unknown'
                         .html(`<p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Air Quality:</strong> ${city.air_quality ? city.air_quality : 'Unknown'}</p>`);
 
-                    await addWikipediaLink(city, cityInfo.node());
                 }
             }
         });
