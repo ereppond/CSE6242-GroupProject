@@ -1,2 +1,5 @@
 \.ipynb_checkpoints\
 \BlissfulBorders\src\__pycache__\
+
+# Mac SD data
+.DS_Store

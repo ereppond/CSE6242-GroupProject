@@ -11,6 +11,7 @@
         body {
             margin: 0;
             padding: 0;
+            font-family: Arial, sans-serif;
         }
 
         #map {
@@ -153,9 +154,10 @@
                     })
                         .setLngLat([city.lng, city.lat])
                         .addTo(map);
-                    var popup = new mapboxgl.Popup({ offset: 25 })
-                        .setHTML(`<h3>${city.city}</h3><p>\nPopulation: ${city.population}<br>Average Temp: ${city.avg_temp}</p>`);
-                    marker.setPopup(popup);
+                        var popup = new mapboxgl.Popup({ offset: 25 })
+                            .setHTML(`<h3>${city.city}</h3><p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Average Temp:</strong> ${Math.round(city.avg_temp)}</p>`);
+                        marker.setPopup(popup);
+
 
                     var li = d3.select("#city-list").append("li")
                         .text(city.city)
@@ -175,10 +177,10 @@
                             };
                         }(city));
 
-                    var cityInfo = d3.select("#city-list").append("div")
-                        .attr("class", "city-info")
-                        .style("display", "none")
-                        .html(`<p>Population: ${city.population}<br>Air Quality: ${city.air_quality}</p>`);
+                        var cityInfo = d3.select("#city-list").append("div")
+                            .attr("class", "city-info")
+                            .style("display", "none")
+                            .html(`<p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Air Quality:</strong> ${city.air_quality}</p>`);
 
                 }
             }
