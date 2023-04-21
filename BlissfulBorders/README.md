@@ -31,7 +31,7 @@ For a simple getting started tutorial, watch this video: [https://www.youtube.co
 
 - `results-by-userid.html`: Generates recommendations based on user ID. Users can input their user ID and the number of locations they would like to receive recommendations for.
 - `preferences.html`: Displays a map with relocation recommendations, top cities, and their details.
-- `test.html`: Contains a form for users to provide their preferences on various factors.
+- `add-rating.html`: Contains a form for users to provide their preferences on various factors.
 - `app.py`: A Flask web application that serves the HTML files, handles form submissions, and generates recommendations based on user inputs.
 
 With BlissfulBoarders, users can find tailored location recommendations, making their search for the perfect place to relocate more efficient and personalized.
