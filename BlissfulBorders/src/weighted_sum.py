@@ -242,7 +242,7 @@ def determine_city_size(value):
         return np.nan
     elif value <= 4999:
         return "Rural"
-    elif 5000 <= value <= 49999:
+    elif 5000 <= value <= 99999:
         return "Town"
     elif 50000 <= value <= 2999999:
         return "City"
@@ -374,9 +374,9 @@ def optimize(df, user_profile, n=5):
             .head(n)
         )
     except:
-        sorted_df = df.sort_values(by="weighted_sum", ascending=False).reset_index(
-            drop=True
-        )
+        sorted_df = df.sort_values(
+            by=["weighted_sum", "WH Score"], ascending=False
+        ).reset_index(drop=True)
 
     # Return a list of the 'City' values of the top n rows
     return sorted_df
