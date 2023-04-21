@@ -111,7 +111,6 @@
             display: none;
             margin-top: 5px;
         }
-
     </style>
 </head>
 
@@ -142,15 +141,57 @@
         zoom: 3
         });
 
+        // given a country and city, find the associated Wikipedia article if one exists
+        async function getWikipediaArticleUrl(country, city) {
+            const baseUrl = 'https://en.wikipedia.org/w/api.php';
+            const searchQuery = `${city}, ${country}`;
+            const url = new URL(baseUrl);
+
+            // Set the search parameters
+            url.searchParams.set('action', 'query');
+            url.searchParams.set('format', 'json');
+            url.searchParams.set('list', 'search');
+            url.searchParams.set('utf8', '1');
+            url.searchParams.set('formatversion', '2');
+            url.searchParams.set('srsearch', searchQuery);
+            url.searchParams.set('origin', '*'); // Required for CORS requests
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.query.search.length > 0) {
+                    const pageTitle = data.query.search[0].title;
+                    const articleUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}`;
+                    return articleUrl;
+                } else {
+                    console.log('No Wikipedia article found for the given city and country');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching Wikipedia article:', error);
+                return null;
+            }
+        }
+
         Papa.parse('/static/{{ filename }}', {
             header: true,
             download: true,
-            complete: function (results) {
+            complete: async function (results) {
                 var cities = results.data;
                 var max_i = cities.length
                 if ("{{ filename}}" == "sample_data.csv") {
                     max_i = 10
                 }
+
+                async function addWikipediaLink(city, cityInfo) {
+                    const wikipediaUrl = await getWikipediaArticleUrl(city.country, city.city);
+                    if (wikipediaUrl) {
+                        cityInfo.insertAdjacentHTML('beforeend', `<p><a href="${wikipediaUrl}" target="_blank">Read more on Wikipedia</a></p>`);
+                    }
+                }
+
+
                 for (var i = 0; i < max_i; i++) {
                     var city = cities[i];
                     var marker = new mapboxgl.Marker({
@@ -192,8 +233,10 @@
                     var cityInfo = d3.select("#city-list").append("div")
                         .attr("class", "city-info")
                         .style("display", "none")
-                        .html(`<p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Air Quality:</strong> ${city.air_quality}</p>`);
-
+                        // if airquality is empty it will appear 'Unknown'
+                        .html(`<p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Air Quality:</strong> ${city.air_quality ? city.air_quality : 'Unknown'}</p>`);
+                        
+                    await addWikipediaLink(city, cityInfo.node());
                 }
             }
         });
