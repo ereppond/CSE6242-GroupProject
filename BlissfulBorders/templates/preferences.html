@@ -243,21 +243,6 @@
                     return htmlContent;
                 }
 
-                // Add container for city image
-                var cityImageContainer = d3.select("body").append("div")
-                    .attr("id", "city-image-container")
-                    .style("position", "fixed")
-                    .style("top", "100px")
-                    .style("left", "50px")
-                    .style("max-width", "400px");
-
-                // Create a new container div for the white box
-                var whiteBoxContainer = cityImageContainer.append("div")
-                    .attr("class", "white-box-container")
-                    .style("background-color", "#ffffff")
-                    .style("box-shadow", "0px 0px 5px rgba(0, 0, 0, 0.5)")
-
-
                 for (var i = 0; i < max_i; i++) {
                     var city = cities[i];
                     var marker = new mapboxgl.Marker({
@@ -287,29 +272,20 @@
                                     zoom: 8
                                 });
 
-                                // Get the city image and display it in the top-left corner of the screen.
+                                // Get the city image and display it in the cityInfo div.
                                 const imageURL = await getCityImageURL(clickedCity.country, clickedCity.city);
-                                var cityImage = cityImageContainer.select("img");
+                                var cityImage = d3.select(cityInfo).select("img");
                                 if (imageURL) {
                                     if (cityImage.empty()) {
-                                        cityImageContainer.append("img").attr("src", imageURL).attr("alt", clickedCity.city).style("width", "100%").style("height", "auto");
+                                        d3.select(cityInfo).append("img").attr("src", imageURL).attr("alt", clickedCity.city).style("width", "100%").style("height", "auto");
                                     } else {
                                         cityImage.attr("src", imageURL).attr("alt", clickedCity.city);
                                     }
                                 } else {
-                                    cityImageContainer.select("img").remove();
-                                }
-
-                                // Toggle the city image visibility based on the cityInfo visibility
-                                if (cityInfo.style.display === "none") {
-                                    cityImage.style("display", "none");
-                                } else {
-                                    cityImage.style("display", "block");
+                                    d3.select(cityInfo).select("img").remove();
                                 }
                             };
                         }(city));
-
-
 
                     var cityInfo = d3.select("#city-list").append("div")
                         .attr("class", "city-info")
