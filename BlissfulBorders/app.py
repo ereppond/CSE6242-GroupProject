@@ -66,6 +66,51 @@ def add_rating():
     return render_template("add-rating.html")
 
 
+@app.route("/submit-rating")
+def submit_rating():
+    city = request.form.get("city")
+    country = request.form.get("country")
+    rating = request.form.get("rating")
+    sector = request.form.get("sector")
+    climate = request.form.get("climate")
+    humidity = request.form.get("humidity")
+    city_size = request.form.get("city_size")
+    lgbtq = int(request.form.get("lgbtq"))
+    women = int(request.form.get("women"))
+    freedom = int(request.form.get("freedom"))
+    economy = int(request.form.get("economy"))
+    user = {
+        "sector": sector,
+        "climate": climate,
+        "humidity": humidity,
+        "city_size": city_size,
+        "LGBTQ_rank": lgbtq,
+        "WPSI_rank": women,
+        "freedom_rank": freedom,
+        "GDP_rank": economy,
+        "city": city,
+        "country": country,
+    }
+    location_id = df[(df["city"] == city) & (df["country"] == country)][
+        "location_id"
+    ].values[0]
+    user["location_id"] = location_id
+    user_id = user_data["user_id"].astype(int).max() + 1
+    user["user_id"] = user_id
+    user_data = pd.concat([user_data, pd.DataFrame([user])]).reset_index(drop=True)
+    user_data.to_csv("data/user_data.csv", index=False)
+    r.user_data = user_data
+    r.user_item_matrix = None
+    r.similarity_matrix = None
+    results = get_preds(request, 5, user_id)
+    lat = results.loc[0, "lat"]
+    lng = results.loc[0, "lng"]
+    filename = "test_results.csv"
+    results.to_csv(f"static/{filename}", index=False)
+    popup = f"Your UserID is {user_id}.\nYou can now generate recommendations by using the 'Get Results By User ID' tab."
+    render_template("preferences.html", filename=filename, lat=lat, lng=lng)
+
+
 @app.route("/get_user")
 def get_user():
     return render_template("results-by-userid.html")

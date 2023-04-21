@@ -244,7 +244,7 @@ def determine_city_size(value):
         return "Rural"
     elif 5000 <= value <= 49999:
         return "Town"
-    elif 50000 <= value <= 99999:
+    elif 50000 <= value <= 2999999:
         return "City"
     else:
         return "Big City"

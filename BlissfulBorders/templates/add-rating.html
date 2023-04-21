@@ -57,7 +57,7 @@
         </ul>
     </nav>
     <h1>City Rating Form</h1>
-    <form>
+    <form method="POST" action="{{ url_for('submit_rating') }}">
         <label for="country">Select a country:</label>
         <select id="country" name="country">
             <option value="">--Please choose an option--</option>
@@ -68,8 +68,6 @@
         <select id="city" name="city">
             <option value="">--Please choose a country first--</option>
         </select>
-        <br><br>
-        <input type="submit" value="Submit">
     </form>
 
     <script>
@@ -120,7 +118,62 @@
             })
             .catch(error => console.error(error));
     </script>
-
+    <br>
+    <label for="rating">Please rate the location selected above:</label>
+    <input type="range" id="rating" name="rating" min="1" max="10" oninput="rating_value.innerHTML = rating.value;">
+    <span id="rating_value">5</span>
+    <br><br>
+    <h2>Please input your preferences when it comes to what you would like for a location.</h2>
+    <label for="sector">Select a economic sector:</label>
+    <select id="sector" name="sector">
+        <option value="">--Please choose an option--</option>
+        <option value="Agricultural">Agricultural</option>
+        <option value="Service">Service</option>
+        <option value="Industrial">Industrial</option>
+    </select>
+    <br><br>
+    <label for="climate">Select a climate:</label>
+    <select id="climate" name="climate">
+        <option value="">--Please choose a climate--</option>
+        <option value="Cold">Cold</option>
+        <option value="Temperate">Temperate</option>
+        <option value="Tropical">Tropical</option>
+    </select>
+    <br><br>
+    <label for="humidity">Select a level of humidity:</label>
+    <select id="humidity" name="humidity">
+        <option value="">--Please choose a humidity level--</option>
+        <option value="Humid">Humid</option>
+        <option value="Moderate">Moderate</option>
+        <option value="Dry">Dry</option>
+    </select>
+    <br></br>
+    <label for="city_size">Select a city size:</label>
+    <select id="city_size" name="city_size">
+        <option value="">--Please choose a city size--</option>
+        <option value="Rural">Rural</option>
+        <option value="Town">Town</option>
+        <option value="City">City</option>
+        <option value="Big City">Big City</option>
+    </select>
+    <br><br>
+    <label for="lgbtq">Importance of LGBTQ Equality:</label>
+    <input type="range" id="lgbtq" name="lgbtq" min="0" max="4" oninput="lgbtq_value.innerHTML = lgbtq.value;">
+    <span id="lgbtq_value">2</span>
+    <br><br>
+    <label for="women">Importance of Status of Women Equality:</label>
+    <input type="range" id="women" name="women" min="0" max="4" oninput="women_value.innerHTML = women.value;">
+    <span id="women_value">2</span>
+    <br><br>
+    <label for="freedom">Importance of Freedom:</label>
+    <input type="range" id="freedom" name="freedom" min="0" max="4" oninput="freedom_value.innerHTML = freedom.value;">
+    <span id="freedom_value">2</span>
+    <br><br>
+    <label for="economy">Importance of Strength of Economy:</label>
+    <input type="range" id="economy" name="economy" min="0" max="4" oninput="economy_value.innerHTML = economy.value;">
+    <span id="economy_value">2</span>
+    <br><br>
+    <input type="submit" value="Submit">
 </body>
 
 </html>
