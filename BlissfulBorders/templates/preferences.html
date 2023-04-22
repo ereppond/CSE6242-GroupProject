@@ -5,12 +5,14 @@
     <title>Relocation Recommendations</title>
     <meta charset='utf-8' />
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap' rel='stylesheet'>
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.4.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.4.0/mapbox-gl.css' rel='stylesheet' />
     <style>
         body {
             margin: 0;
             padding: 0;
+            font-family: 'Roboto', sans-serif;
         }
 
         #map {
@@ -29,6 +31,7 @@
             background-color: #f2f2f2;
             padding: 10px;
             overflow-y: scroll;
+            box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.5);
         }
 
         nav {
@@ -79,6 +82,7 @@
             font-weight: bold;
             font-size: 16px;
             cursor: pointer;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
         }
 
         .marker:hover {
@@ -157,29 +161,125 @@
             document.getElementById("popup-message").style.display = "none";
         });
 
+        // given a country and city, find the associated Wikipedia article if one exists
+        async function getWikipediaArticleUrl(country, city) {
+            const baseUrl = 'https://en.wikipedia.org/w/api.php';
+            const searchQuery = `${city}, ${country}`;
+            const url = new URL(baseUrl);
+
+            // Set the search parameters
+            url.searchParams.set('action', 'query');
+            url.searchParams.set('format', 'json');
+            url.searchParams.set('list', 'search');
+            url.searchParams.set('utf8', '1');
+            url.searchParams.set('formatversion', '2');
+            url.searchParams.set('srsearch', searchQuery);
+            url.searchParams.set('origin', '*'); // Required for CORS requests
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.query.search.length > 0) {
+                    const pageTitle = data.query.search[0].title;
+                    const articleUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}`;
+                    return articleUrl;
+                } else {
+                    console.log('No Wikipedia article found for the given city and country');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching Wikipedia article:', error);
+                return null;
+            }
+        }
+
+        async function getCityImageURL(country, city) {
+            const baseUrl = 'https://commons.wikimedia.org/w/api.php';
+            const searchQuery = `${city}, ${country}`;
+            const url = new URL(baseUrl);
+
+            // Set the search parameters
+            url.searchParams.set('action', 'query');
+            url.searchParams.set('format', 'json');
+            url.searchParams.set('prop', 'imageinfo');
+            url.searchParams.set('generator', 'search');
+            url.searchParams.set('utf8', '1');
+            url.searchParams.set('formatversion', '2');
+            url.searchParams.set('gsrsearch', searchQuery);
+            url.searchParams.set('gsrnamespace', '6'); // Search only in the 'File' namespace
+            url.searchParams.set('iiprop', 'url');
+            url.searchParams.set('origin', '*'); // Required for CORS requests
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.query && data.query.pages.length > 0) {
+                    const imageURL = data.query.pages[0].imageinfo[0].url;
+                    return imageURL;
+                } else {
+                    console.log('No image found for the given city and country');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching image from Wikimedia Commons:', error);
+                return null;
+            }
+        }
+
+
         Papa.parse('/static/{{ filename }}', {
             header: true,
             download: true,
-            complete: function (results) {
+            complete: async function (results) {
                 var cities = results.data;
                 var max_i = cities.length
                 if ("{{ filename}}" == "sample_data.csv") {
                     max_i = 10
                 }
+
+                async function addWikipediaLink(city, cityInfo) {
+                    if (!cityInfo.getAttribute('data-wikipedia-link-added')) {
+                        const wikipediaUrl = await getWikipediaArticleUrl(city.country, city.city);
+                        if (wikipediaUrl) {
+                            cityInfo.insertAdjacentHTML('beforeend', `<p><a href="${wikipediaUrl}" target="_blank">Read more on Wikipedia</a></p>`);
+                            cityInfo.setAttribute('data-wikipedia-link-added', 'true');
+                        }
+                    }
+                }
+
+                async function setPopupContent(city) {
+                    const htmlContent = `
+                        <div style="font-size: 14px; line-height: 1.5; overflow: hidden;">
+                            <h2 style="font-size: 20px; margin-bottom: 10px;">${city.city}</h2>
+                            <div><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}</div>
+                            <div><strong>Average Temperature:</strong> ${Math.round(city.avg_temp)} &#8451;</div>
+                            <div><strong>Average Humidity:</strong> ${Math.round(city.avg_humidity)}%</div>
+                            <div><strong>Country:</strong> ${city.country}</div>
+                        </div>
+                        `;
+
+                    return htmlContent;
+                }
+
                 for (var i = 0; i < max_i; i++) {
-                    var city = cities[i]; var marker = new mapboxgl.Marker({
-                        element:
-                            createMarkerElement(i + 1)
-                    }).setLngLat([city.lng, city.lat]).addTo(map); var popup = new mapboxgl.Popup({
-                        offset: 25
-                    }).setHTML(`<h3>${city.city}</h3>
-        <p>\nPopulation: ${city.population}<br>Average Temp: ${city.avg_temp}</p>`);
-                    marker.setPopup(popup);
+                    var city = cities[i];
+                    var marker = new mapboxgl.Marker({
+                        element: createMarkerElement(i + 1)
+                    })
+                        .setLngLat([city.lng, city.lat])
+                        .addTo(map);
+                    setPopupContent(city).then((popupContent) => {
+                        var popup = new mapboxgl.Popup({ offset: 25, maxWidth: '500px' })
+                            .setHTML(popupContent);
+                        marker.setPopup(popup);
+                    });
 
                     var li = d3.select("#city-list").append("li")
                         .text(city.city)
                         .on("click", function (clickedCity) {
-                            return function () {
+                            return async function () {
                                 var cityInfo = this.nextSibling;
                                 if (cityInfo.style.display === "none") {
                                     cityInfo.style.display = "block";
@@ -191,14 +291,29 @@
                                     center: [clickedCity.lng, clickedCity.lat],
                                     zoom: 8
                                 });
+
+                                // Get the city image and display it in the cityInfo div.
+                                const imageURL = await getCityImageURL(clickedCity.country, clickedCity.city);
+                                var cityImage = d3.select(cityInfo).select("img");
+                                if (imageURL) {
+                                    if (cityImage.empty()) {
+                                        d3.select(cityInfo).append("img").attr("src", imageURL).attr("alt", clickedCity.city).style("width", "100%").style("height", "auto");
+                                    } else {
+                                        cityImage.attr("src", imageURL).attr("alt", clickedCity.city);
+                                    }
+                                } else {
+                                    d3.select(cityInfo).select("img").remove();
+                                }
                             };
                         }(city));
 
                     var cityInfo = d3.select("#city-list").append("div")
                         .attr("class", "city-info")
                         .style("display", "none")
-                        .html(`<p>Population: ${city.population}<br>Air Quality: ${city.air_quality}</p>`);
+                        // if airquality is empty it will appear 'Unknown'
+                        .html(`<p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Air Quality:</strong> ${city.air_quality ? city.air_quality : 'Unknown'}</p>`);
 
+                    await addWikipediaLink(city, cityInfo.node());
                 }
             }
         });
