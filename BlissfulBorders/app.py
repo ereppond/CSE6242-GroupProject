@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash, redirect, url_for
 from src.weighted_sum import *
 from src.recommender import CollaborativeFilteringRecommender as rec
 import pickle as pk
@@ -52,13 +52,27 @@ def submit_form():
         lng = -79.9959
     filename = "test_results.csv"
     results.to_csv(f"static/{filename}", index=False)
-    return render_template("preferences.html", filename=filename, lat=lat, lng=lng)
+    return render_template(
+        "preferences.html",
+        filename=filename,
+        lat=lat,
+        lng=lng,
+        popup="If you want to get results based on other users similar to you, try our rating form on the 'Rate My Location' Tab.",
+    )
 
 
 @app.route("/preferences")
 def preferences():
+    lat = 40.4406
+    lng = -79.9959
     filename = "sample_data.csv"
-    return render_template("preferences.html", filename=filename)
+    return render_template(
+        "preferences.html",
+        filename=filename,
+        lat=40.4406,
+        lng=-79.9959,
+        popup="To get real recommendations, enter your preferences under the 'Home' tab.",
+    )
 
 
 @app.route("/add-rating")
@@ -66,7 +80,7 @@ def add_rating():
     return render_template("add-rating.html")
 
 
-@app.route("/submit-rating")
+@app.route("/submit_rating", methods=["POST"])
 def submit_rating():
     city = request.form.get("city")
     country = request.form.get("country")
@@ -79,6 +93,7 @@ def submit_rating():
     women = int(request.form.get("women"))
     freedom = int(request.form.get("freedom"))
     economy = int(request.form.get("economy"))
+
     user = {
         "sector": sector,
         "climate": climate,
@@ -90,25 +105,23 @@ def submit_rating():
         "GDP_rank": economy,
         "city": city,
         "country": country,
+        "user_rating": rating,
     }
     location_id = df[(df["city"] == city) & (df["country"] == country)][
         "location_id"
     ].values[0]
     user["location_id"] = location_id
-    user_id = user_data["user_id"].astype(int).max() + 1
+    user_id = r.user_data["user_id"].astype(int).max() + 1
     user["user_id"] = user_id
-    user_data = pd.concat([user_data, pd.DataFrame([user])]).reset_index(drop=True)
-    user_data.to_csv("data/user_data.csv", index=False)
-    r.user_data = user_data
-    r.user_item_matrix = None
-    r.similarity_matrix = None
-    results = get_preds(request, 5, user_id)
+    results = r.get_new_user_rec(user, 5)
     lat = results.loc[0, "lat"]
     lng = results.loc[0, "lng"]
     filename = "test_results.csv"
     results.to_csv(f"static/{filename}", index=False)
     popup = f"Your UserID is {user_id}.\nYou can now generate recommendations by using the 'Get Results By User ID' tab."
-    render_template("preferences.html", filename=filename, lat=lat, lng=lng)
+    return render_template(
+        "preferences.html", filename=filename, lat=lat, lng=lng, popup=popup
+    )
 
 
 @app.route("/get_user")

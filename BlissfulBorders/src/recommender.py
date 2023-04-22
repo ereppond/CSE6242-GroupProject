@@ -46,7 +46,11 @@ class CollaborativeFilteringRecommender:
         return self.get_user_col()[similar_users]
 
     def get_user_index(self, user_id):
-        return np.where(self.get_user_col() == user_id)[0][0]
+        try:
+            return np.where(self.get_user_col() == user_id)[0][0]
+        except:
+            user = self.get_user_col()[-1]
+            return np.where(self.get_user_col() == user)[0][0]
 
     def get_user_col(self):
         return self.get_user_item_matrix().index.values
@@ -79,9 +83,12 @@ class CollaborativeFilteringRecommender:
     def recommend_places_to_live(self, user_id, n=5):
         recommendations = self.recommend_items(user_id, n=n)
         recommended_places = []
+        if recommendations.empty:
+            return self.location_data.sort_values(
+                by="user_rating", ascending=False
+            ).head(n)
         for index, row in recommendations.iloc[: int(n)].iterrows():
             location = row[self.location_col]
-            print(location)
             place = (
                 self.location_data[self.location_data[self.location_col] == location]
                 .reset_index(drop=True)
@@ -106,9 +113,12 @@ class CollaborativeFilteringRecommender:
         return pd.DataFrame(recommended_places)
 
     def get_new_user_rec(self, user, num_results):
-        user_id = self.user_data.shape[0]
-        user["user_id"] = user_id
-        self.user_data = pd.concat(
-            [self.user_data, pd.DataFrame([user])], axis=0
-        ).reset_index(drop=True)
-        return self.recommend_places_to_live(user_id=user_id, n=num_results)
+        self.user_data = pd.concat([self.user_data, pd.DataFrame([user])]).reset_index(
+            drop=True
+        )
+        self.user_data.to_csv("data/user_data.csv", index=False)
+        self.user_item_matrix = None
+        self.similarity_matrix = None
+        self.get_user_item_matrix()
+        self.get_similarity_matrix()
+        return self.recommend_places_to_live(user_id=user["user_id"], n=num_results)

@@ -89,6 +89,10 @@
             background-color: rgb(184, 98, 17);
         }
 
+        #popup-message {
+            border: 2px solid #181313;
+        }
+
         #city-list {
             margin: 0;
             padding: 0;
@@ -123,6 +127,11 @@
             <li><a href="{{ url_for('get_user') }}">Get Results By User ID</a></li>
         </ul>
     </nav>
+    <div id="popup-message"
+        style="display: none; position: fixed; top: 50%; left: 40%; transform: translateX(-50%); background-color:white; color: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 5px; border: 2px solid #181313; z-index: 999;">
+        <p id="popup-text"></p>
+        <button id="popup-button">Continue to Results</button>
+    </div>
     <div id="map"></div>
     <div id="sidebar">
         <h2>Top Cities</h2>
@@ -132,6 +141,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.4.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.4.0/mapbox-gl.css' rel='stylesheet' />
+
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoiZXJlcHBvbmQzIiwiYSI6ImNsZzJ6ZWEybjAydmQzcm51bXloMGd1YnYifQ.DQnL4_jYBS-znzq-o_6gPw';
         var map = new mapboxgl.Map({
@@ -139,6 +149,16 @@
             style: 'mapbox://styles/ereppond3/clg2zg3k9000701ohukmoailh',
             center: [{{ lng }}, {{ lat }}],
         zoom: 3
+    });
+        var popupMessage = "{{ popup }}";
+        if (popupMessage) {
+            document.getElementById("popup-text").innerHTML = popupMessage;
+            document.getElementById("popup-message").style.display = "block";
+        }
+
+        // Add an event listener to close the popup message when the close button is clicked
+        document.getElementById("popup-button").addEventListener("click", function () {
+            document.getElementById("popup-message").style.display = "none";
         });
 
         // given a country and city, find the associated Wikipedia article if one exists
