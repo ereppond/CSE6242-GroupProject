@@ -17,11 +17,6 @@ def load_data():
         encoding="unicode_escape",
     )
 
-    # Tropical Climate Data
-    tropical_data = pd.read_csv(
-        "https://raw.githubusercontent.com/joannarashid/cse6242_proj/main/tropical_countries.csv"
-    )
-
     # Climate Data
     climate_data = pd.read_csv(
         "https://raw.githubusercontent.com/joannarashid/cse6242_proj/main/climate_zones.csv"
@@ -75,6 +70,7 @@ def load_data():
             "country",
             "lat",
             "lng",
+            "wh_rank",
         ]
     ]
     return df
@@ -94,7 +90,7 @@ def clean_data(wh_data, wps_data, climate_data, lgbtq_data, sector_data):
     # Clean World Happiness Data (preserving all vars)
     wh_data.rename(
         columns={
-            "Overall rank": "WH Rank",
+            "Overall rank": "wh_rank",
             "Country or region": "Country",
             "Score": "WH Score",
         },
@@ -372,12 +368,12 @@ def optimize(df, user_profile, n=5):
     # Normalize the ranks so that they sum up to 1
     rank_sum = (
         user_profile["LGBTQ_rank"]
-        + user_profile["WPSI_rank"]
+        + user_profile["WPS_rank"]
         + user_profile["freedom_rank"]
         + user_profile["GDP_rank"]
     )
     LGBTQ_weight = user_profile["LGBTQ_rank"] / rank_sum
-    WPS_weight = user_profile["WPSI_rank"] / rank_sum
+    WPS_weight = user_profile["WPS_rank"] / rank_sum
     freedom_weight = user_profile["freedom_rank"] / rank_sum
     GDP_weight = user_profile["GDP_rank"] / rank_sum
     # AQ_weight = user_profile["AQ_rank"] / rank_sum
@@ -385,7 +381,7 @@ def optimize(df, user_profile, n=5):
     # Create a new column in the dataframe that combines the weights with the corresponding variables
     df.loc[:, "weighted_sum"] = (
         (LGBTQ_weight * df["LGBTQ_rank"])
-        + (WPS_weight * df["WPSI_rank"])
+        + (WPS_weight * df["WPS_rank"])
         + (freedom_weight * df["freedom_rank"])
         + (GDP_weight * df["GDP_rank"])
         # + (AQ_weight) * df["AQ_norm"]

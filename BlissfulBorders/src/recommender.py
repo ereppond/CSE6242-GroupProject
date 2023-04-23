@@ -23,10 +23,8 @@ class CollaborativeFilteringRecommender:
         self.gdp_col = "GDP_rank"
         self.user_item_matrix = None
         self.similarity_matrix = None
+        self.user_data = self.user_data.sample(10000)
         self.new_user = False
-        self.user_data = self.user_data.sample(10000).reset_index(drop=True)
-        # pd.set_option("display.max_columns", None)
-        # print(self.location_data.head())
 
     def get_user_item_matrix(self):
         if self.user_item_matrix is None:
@@ -52,7 +50,7 @@ class CollaborativeFilteringRecommender:
     def get_user_index(self, user_id):
         try:
             return np.where(self.get_user_col() == user_id)[0][0]
-        except:
+        except Exception:
             user = self.get_user_col()[-1]
             return np.where(self.get_user_col() == user)[0][0]
 
@@ -62,7 +60,7 @@ class CollaborativeFilteringRecommender:
     def get_item_col(self):
         return self.get_user_item_matrix().columns.values
 
-    def recommend_items(self, user_id, n=5):
+    def recommend_items(self, user_id):
         print("Running recommend_items")
         user_index = self.get_user_index(user_id)
         user_item_matrix = self.get_user_item_matrix()
@@ -70,7 +68,7 @@ class CollaborativeFilteringRecommender:
         weighted_sum = np.zeros(user_item_matrix.shape[1])
         similarity_sum = np.zeros(user_item_matrix.shape[1])
 
-        for index, rating in user_item_matrix.iloc[user_index].iteritems():
+        for index, _ in user_item_matrix.iloc[user_index].iteritems():
             item_index = np.where(self.get_item_col() == index)[0][0]
             similar_users = similarity_matrix[user_index].argsort()[::-1][1:]
             similar_users_rating = user_item_matrix.iloc[similar_users, item_index]
@@ -90,7 +88,7 @@ class CollaborativeFilteringRecommender:
 
     def recommend_places_to_live(self, user_id, n=5):
         print("Running recommend_places_to_live")
-        recommendations = self.recommend_items(user_id, n=n)
+        recommendations = self.recommend_items(user_id)
         recommended_places = []
         if recommendations.empty:
             return self.location_data.sort_values(
@@ -103,31 +101,37 @@ class CollaborativeFilteringRecommender:
                 .reset_index(drop=True)
                 .iloc[0]
             )
-            place_info = {
-                "lat": place.lat,
-                "lng": place.lng,
-                "city": place[self.city_col],
-                "country": place[self.country_col],
-                "sector": place[self.sector_col],
-                "climate": place[self.climate_col],
-                "humidity": place[self.humidity_col],
-                "city_size": place[self.city_size_col],
-                "LGBTQ_rank": place[self.lgbtq_col],
-                "WPS_rank": place[self.wpsi_col],
-                "freedom_rank": place[self.freedom_col],
-                "GDP_rank": place[self.gdp_col],
-                "recommendation_score": row["ranking"],
-            }
-            recommended_places.append(place_info)
+            users_location = self.user_data[self.user_data["user_id"] == user_id][
+                "city"
+            ].values
+            if place["city"] not in users_location:
+                place_info = {
+                    "lat": place.lat,
+                    "lng": place.lng,
+                    "city": place[self.city_col],
+                    "country": place[self.country_col],
+                    "sector": place[self.sector_col],
+                    "climate": place[self.climate_col],
+                    "humidity": place[self.humidity_col],
+                    "city_size": place[self.city_size_col],
+                    "LGBTQ_rank": place[self.lgbtq_col],
+                    "WPS_rank": place[self.wpsi_col],
+                    "freedom_rank": place[self.freedom_col],
+                    "GDP_rank": place[self.gdp_col],
+                    "population": place["population"],
+                    "air_quality": place["air_quality"],
+                    "wh_rank": place["wh_rank"],
+                    "recommendation_score": row["ranking"],
+                }
+                recommended_places.append(place_info)
         recommended_places = pd.DataFrame(recommended_places)
-        recommended_places = recommended_places.iloc[1:].reset_index(drop=True)
         return recommended_places
 
     def get_new_user_rec(self, user, num_results):
         self.user_data = pd.concat([self.user_data, pd.DataFrame([user])]).reset_index(
             drop=True
         )
-        self.user_data.to_csv("data/user_data.csv", index=False)
+        # self.user_data.to_csv("data/user_data.csv", index=False)
         self.user_item_matrix = None
         self.similarity_matrix = None
         self.get_user_item_matrix()

@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
-from src.weighted_sum import *
+from flask import Flask, render_template, request
+from src.weighted_sum import load_data, optimize, load_user_data
 from src.recommender import CollaborativeFilteringRecommender as rec
-import pickle as pk
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -58,14 +58,22 @@ def submit_form():
 
 @app.route("/preferences")
 def preferences():
-    lat = 40.4406
-    lng = -79.9959
+    sample = (
+        df[df["city_size"] == "Big City"]
+        .copy()
+        .sort_values("wh_rank")
+        .reset_index(drop=True)
+        .iloc[:20]
+    )
+    lat = sample.loc[0, "lat"]
+    lng = sample.loc[0, "lng"]
+    sample.to_csv("static/sample_data.csv", index=False)
     filename = "sample_data.csv"
     return render_template(
         "preferences.html",
         filename=filename,
-        lat=40.4406,
-        lng=-79.9959,
+        lat=lat,
+        lng=lng,
         popup="To get real recommendations, enter your preferences under the 'Home' tab.",
     )
 
@@ -124,8 +132,8 @@ def get_user():
     return render_template("results-by-userid.html")
 
 
-def get_preds(request, num_results, user):
-    if "weighted_filtering" in request.form:
+def get_preds(_request, num_results, user):
+    if "weighted_filtering" in _request.form:
         results = optimize(df, user, n=num_results).reset_index(drop=True)
     else:
         results = r.recommend_places_to_live(int(user["user_id"]), n=num_results)

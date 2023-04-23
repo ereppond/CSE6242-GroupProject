@@ -201,7 +201,7 @@
                         .attr("class", "city-info")
                         .style("display", "none")
                         // if airquality is empty it will appear 'Unknown'
-                        .html(`<p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Air Quality:</strong> ${city.air_quality ? city.air_quality : 'Unknown'}</p>`);
+                        .html(`<p><strong>Population:</strong> ${parseInt(city.population).toLocaleString()}<br><strong>Air Quality:</strong> ${city.air_quality ? city.air_quality : 'Unknown'}<br><strong>World Happiness Rank:</strong> ${city.wh_rank ? city.wh_rank : 'Unknown'}</p>`);
 
                     await addWikipediaLink(city, cityInfo.node());
                 }
