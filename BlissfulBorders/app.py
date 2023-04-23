@@ -58,9 +58,9 @@ def submit_form():
 
 @app.route("/preferences")
 def preferences():
+    sample = df.copy(deep=True)
     sample = (
-        df[df["city_size"] == "Big City"]
-        .copy()
+        sample[sample["city_size"] == "Big City"]
         .sort_values("wh_rank")
         .reset_index(drop=True)
         .iloc[:20]

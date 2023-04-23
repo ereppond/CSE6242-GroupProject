@@ -23,7 +23,7 @@ class CollaborativeFilteringRecommender:
         self.gdp_col = "GDP_rank"
         self.user_item_matrix = None
         self.similarity_matrix = None
-        self.user_data = self.user_data.sample(10000)
+        # self.user_data = self.user_data.sample(10000)
         self.new_user = False
 
     def get_user_item_matrix(self):
@@ -131,7 +131,7 @@ class CollaborativeFilteringRecommender:
         self.user_data = pd.concat([self.user_data, pd.DataFrame([user])]).reset_index(
             drop=True
         )
-        # self.user_data.to_csv("data/user_data.csv", index=False)
+        self.user_data.to_csv("data/user_data.csv", index=False)
         self.user_item_matrix = None
         self.similarity_matrix = None
         self.get_user_item_matrix()
