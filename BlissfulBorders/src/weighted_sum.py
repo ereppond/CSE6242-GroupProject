@@ -52,6 +52,31 @@ def load_data():
         wh_data, wps_data, climate_data, lgbtq_data, sector_data, city_data, aq_data
     )
     df = transform_values(df)
+    df["location_id"] = df["lng"].astype(str) + "_" + df["lat"].astype(str)
+    df["AQ_rank"].fillna(0.7, inplace=True)
+    df["air_quality"].fillna("Good", inplace=True)
+    df = df[
+        [
+            "climate",
+            "air_quality",
+            "location_id",
+            "AQ_rank",
+            "humidity",
+            "WPS_rank",
+            "avg_temp",
+            "population",
+            "city_size",
+            "neg_aq",
+            "sector",
+            "freedom_rank",
+            "GDP_rank",
+            "LGBTQ_rank",
+            "city",
+            "country",
+            "lat",
+            "lng",
+        ]
+    ]
     return df
 
 
@@ -271,7 +296,7 @@ def transform_values(df):
     climate_codes = df["Climate zone"].unique()
 
     # apply the mapping function to the climate zone column and create two new columns for descriptions
-    df[["Climate description", "Climate type"]] = (
+    df[["Climate description", "climate"]] = (
         df["Climate zone"].apply(map_climate_zones).tolist()
     )
 

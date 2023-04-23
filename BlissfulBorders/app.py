@@ -5,15 +5,10 @@ import pickle as pk
 
 app = Flask(__name__)
 
-df = load_saved_data()
+df = load_data()
 user_data = load_user_data()
 
-r = rec(user_data=user_data, location_data=df)
-# try:
-#     r.similarity_matrix = pk.load(open("../../similarity_matrix.pk", "rb"))
-#     r.user_item_matrix = pd.read_pickle("../../user_item_matrix.pk")
-# except:
-#     pass
+r = rec()
 
 
 @app.route("/")
@@ -38,7 +33,7 @@ def submit_form():
         "humidity": humidity,
         "city_size": city_size,
         "LGBTQ_rank": lgbtq,
-        "WPSI_rank": women,
+        "WPS_rank": women,
         "freedom_rank": freedom,
         "GDP_rank": economy,
     }
@@ -100,7 +95,7 @@ def submit_rating():
         "humidity": humidity,
         "city_size": city_size,
         "LGBTQ_rank": lgbtq,
-        "WPSI_rank": women,
+        "WPS_rank": women,
         "freedom_rank": freedom,
         "GDP_rank": economy,
         "city": city,
@@ -118,7 +113,7 @@ def submit_rating():
     lng = results.loc[0, "lng"]
     filename = "test_results.csv"
     results.to_csv(f"static/{filename}", index=False)
-    popup = f"Your UserID is {user_id}.\nYou can now generate recommendations by using the 'Get Results By User ID' tab."
+    popup = f"Your UserID is {str(user_id)}. You can now generate recommendations by using the 'Get Results By User ID' tab."
     return render_template(
         "preferences.html", filename=filename, lat=lat, lng=lng, popup=popup
     )

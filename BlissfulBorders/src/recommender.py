@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from src.weighted_sum import load_data
 
 
 class CollaborativeFilteringRecommender:
-    def __init__(self, user_data, location_data):
-        self.user_data = user_data
-        self.location_data = location_data
+    def __init__(self):
+        self.user_data = pd.read_csv("data/user_data.csv")
+        self.location_data = load_data()
         self.user_col = "user_id"
         self.location_col = "location_id"
         self.city_col = "city"
@@ -17,12 +18,15 @@ class CollaborativeFilteringRecommender:
         self.humidity_col = "humidity"
         self.city_size_col = "city_size"
         self.lgbtq_col = "LGBTQ_rank"
-        self.wpsi_col = "WPSI_rank"
+        self.wpsi_col = "WPS_rank"
         self.freedom_col = "freedom_rank"
         self.gdp_col = "GDP_rank"
         self.user_item_matrix = None
         self.similarity_matrix = None
         self.new_user = False
+        self.user_data = self.user_data.sample(10000).reset_index(drop=True)
+        # pd.set_option("display.max_columns", None)
+        # print(self.location_data.head())
 
     def get_user_item_matrix(self):
         if self.user_item_matrix is None:
@@ -59,14 +63,14 @@ class CollaborativeFilteringRecommender:
         return self.get_user_item_matrix().columns.values
 
     def recommend_items(self, user_id, n=5):
+        print("Running recommend_items")
         user_index = self.get_user_index(user_id)
         user_item_matrix = self.get_user_item_matrix()
         similarity_matrix = self.get_similarity_matrix()
         weighted_sum = np.zeros(user_item_matrix.shape[1])
         similarity_sum = np.zeros(user_item_matrix.shape[1])
+
         for index, rating in user_item_matrix.iloc[user_index].iteritems():
-            if rating == 0:
-                continue
             item_index = np.where(self.get_item_col() == index)[0][0]
             similar_users = similarity_matrix[user_index].argsort()[::-1][1:]
             similar_users_rating = user_item_matrix.iloc[similar_users, item_index]
@@ -75,19 +79,24 @@ class CollaborativeFilteringRecommender:
                 similar_users_rating * similar_users_similarity
             ).sum()
             similarity_sum[item_index] = similar_users_similarity.sum()
-        ranking = weighted_sum / similarity_sum
+
+        ranking = [
+            weighted_sum[i] / similarity_sum[i] if similarity_sum[i] != 0 else 0
+            for i in range(similarity_sum.shape[0])
+        ]
         ranking = pd.DataFrame({"location_id": self.get_item_col(), "ranking": ranking})
         ranking = ranking.sort_values(by="ranking", ascending=False)
         return ranking
 
     def recommend_places_to_live(self, user_id, n=5):
+        print("Running recommend_places_to_live")
         recommendations = self.recommend_items(user_id, n=n)
         recommended_places = []
         if recommendations.empty:
             return self.location_data.sort_values(
                 by="user_rating", ascending=False
             ).head(n)
-        for index, row in recommendations.iloc[: int(n)].iterrows():
+        for _, row in recommendations.iloc[: int(n)].iterrows():
             location = row[self.location_col]
             place = (
                 self.location_data[self.location_data[self.location_col] == location]
@@ -104,13 +113,15 @@ class CollaborativeFilteringRecommender:
                 "humidity": place[self.humidity_col],
                 "city_size": place[self.city_size_col],
                 "LGBTQ_rank": place[self.lgbtq_col],
-                "WPSI_rank": place[self.wpsi_col],
+                "WPS_rank": place[self.wpsi_col],
                 "freedom_rank": place[self.freedom_col],
                 "GDP_rank": place[self.gdp_col],
                 "recommendation_score": row["ranking"],
             }
             recommended_places.append(place_info)
-        return pd.DataFrame(recommended_places)
+        recommended_places = pd.DataFrame(recommended_places)
+        recommended_places = recommended_places.iloc[1:].reset_index(drop=True)
+        return recommended_places
 
     def get_new_user_rec(self, user, num_results):
         self.user_data = pd.concat([self.user_data, pd.DataFrame([user])]).reset_index(

@@ -7,115 +7,10 @@
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap' rel='stylesheet'>
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.4.0/mapbox-gl.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.4.0/mapbox-gl.css' rel='stylesheet' />
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Roboto', sans-serif;
-        }
-
-        #map {
-            position: absolute;
-            top: 50px;
-            bottom: 0;
-            width: 100%;
-        }
-
-        #sidebar {
-            position: absolute;
-            top: 50px;
-            bottom: 0;
-            right: 0;
-            width: 20%;
-            background-color: #f2f2f2;
-            padding: 10px;
-            overflow-y: scroll;
-            box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.5);
-        }
-
-        nav {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background-color: #333;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-        }
-
-        nav ul {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            list-style: none;
-        }
-
-        nav ul li {
-            margin: 0 10px;
-        }
-
-        nav ul li a {
-            color: #fff;
-            text-decoration: none;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        nav ul li a:hover {
-            background-color: #555;
-        }
-
-        .marker {
-            width: 30px;
-            height: 30px;
-            background-color: rgb(66, 64, 183);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
-        }
-
-        .marker:hover {
-            background-color: rgb(184, 98, 17);
-        }
-
-        #popup-message {
-            border: 2px solid #181313;
-        }
-
-        #city-list {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-        #city-list li {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        #city-list li:hover {
-            background-color: #eee;
-        }
-
-        .city-info {
-            display: none;
-            margin-top: 5px;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="static/css/map.css">
 </head>
 
 <body>
@@ -137,19 +32,14 @@
         <h2>Top Cities</h2>
         <ul id="city-list"></ul>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.4.0/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.4.0/mapbox-gl.css' rel='stylesheet' />
-
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoiZXJlcHBvbmQzIiwiYSI6ImNsZzJ6ZWEybjAydmQzcm51bXloMGd1YnYifQ.DQnL4_jYBS-znzq-o_6gPw';
         var map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/ereppond3/clg2zg3k9000701ohukmoailh',
-            center: [{{ lng }}, {{ lat }}],
-        zoom: 3
-    });
+            center: ["{{ lng }}", "{{ lat }}"],
+            zoom: 3
+        });
         var popupMessage = "{{ popup }}";
         if (popupMessage) {
             document.getElementById("popup-text").innerHTML = popupMessage;
